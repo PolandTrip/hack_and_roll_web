@@ -1,69 +1,89 @@
 "use client";
 
+import React, { useRef, useState } from "react";
 import Button from "@mui/material/Button";
 import { saveAs } from "file-saver";
-import React, { useRef, useState } from "react";
 
 const AudioRecorder: React.FC = () => {
+  // State variables
   const [isRecording, setIsRecording] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const audioChunks = useRef<Blob[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null); // Ref for MediaRecorder
+  const audioChunksRef = useRef<Blob[]>([]); // Ref to store audio chunks
 
+  // Start recording audio
   const startRecording = async () => {
     try {
+      // Request access to microphone
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
 
-      recorder.ondataavailable = (event) => {
-        audioChunks.current.push(event.data);
+      // Initialize MediaRecorder
+      const mediaRecorder = new MediaRecorder(stream);
+
+      // Capture audio data
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
       };
 
-      recorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks.current, { type: "audio/wav" });
+      // Handle stopping the recorder
+      mediaRecorder.onstop = async () => {
+        setIsProcessing(true); // Show processing indicator
+
+        // Create a Blob from the audio chunks
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+
+        // Save the file locally
         saveAs(audioBlob, "recording.wav");
-        audioChunks.current = []; // Clear recorded chunks
+
+        // Upload the file
+        await uploadAudio(audioBlob);
+
+        // Clear the audio chunks
+        audioChunksRef.current = [];
+        setIsProcessing(false); // Hide processing indicator
       };
 
-      recorder.start();
-      setMediaRecorder(recorder);
-      setIsRecording(true);
-    } catch (err) {
-      console.error("Error accessing microphone:", err);
+      // Start recording
+      mediaRecorder.start();
+      mediaRecorderRef.current = mediaRecorder; // Store reference
+      setIsRecording(true); // Update recording state
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
     }
   };
 
-  const stopRecording = async () => {
-    if (mediaRecorder) {
-      mediaRecorder.stop();
-      setMediaRecorder(null);
-      setIsRecording(false);
+  // Stop recording audio
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false); // Update recording state
+    }
+  };
 
-      const audioBlob = new Blob(audioChunks.current, { type: "audio/wav" });
-      audioChunks.current = []; // Clear recorded chunks
+  // Upload the audio file to the backend
+  const uploadAudio = async (audioBlob: Blob) => {
+    const formData = new FormData();
+    formData.append("file", audioBlob, "file.wav");
 
-      // Upload the file to the server
-      const formData = new FormData();
-      formData.append("file", audioBlob, "recording.wav");
+    try {
+      const response = await fetch("http://localhost:8000/api/upload-audio", {
+        method: "POST",
+        body: formData,
+      });
 
-      try {
-        const response = await fetch("http://localhost:8080/api/upload-audio", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (response.ok) {
-          console.log("File uploaded successfully.");
-        } else {
-          console.error("Error uploading file.");
-        }
-      } catch (err) {
-        console.error("Error:", err);
+      if (response.ok) {
+        console.log("File uploaded successfully.");
+      } else {
+        console.error("Error uploading file:", await response.text());
       }
+    } catch (error) {
+      console.error("Error uploading file:", error);
     }
   };
 
   return (
     <div>
+      {/* Record/Stop button */}
       <Button
         variant="contained"
         color={isRecording ? "error" : "info"} // Red when recording, blue otherwise
@@ -77,6 +97,13 @@ const AudioRecorder: React.FC = () => {
       >
         {isRecording ? "Stop Recording" : "Start Recording"}
       </Button>
+
+      {/* Loading Indicator */}
+      {isProcessing && (
+        <p style={{ marginTop: "10px", fontSize: "16px", color: "gray" }}>
+          Processing audio...
+        </p>
+      )}
     </div>
   );
 };
