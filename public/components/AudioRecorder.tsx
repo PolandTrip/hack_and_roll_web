@@ -2,66 +2,65 @@
 
 import React, { useRef, useState } from "react";
 import Button from "@mui/material/Button";
-import { saveAs } from "file-saver";
 
 const AudioRecorder: React.FC = () => {
-  // State variables
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null); // Ref for MediaRecorder
-  const audioChunksRef = useRef<Blob[]>([]); // Ref to store audio chunks
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
-  // Start recording audio
   const startRecording = async () => {
     try {
-      // Request access to microphone
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // Initialize MediaRecorder
       const mediaRecorder = new MediaRecorder(stream);
 
-      // Capture audio data
       mediaRecorder.ondataavailable = (event) => {
         audioChunksRef.current.push(event.data);
       };
 
-      // Handle stopping the recorder
       mediaRecorder.onstop = async () => {
-        setIsProcessing(true); // Show processing indicator
+        console.log("Recording stopped, processing audio...");
+        setIsProcessing(true);
 
-        // Create a Blob from the audio chunks
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+        try {
+          // Create a Blob from the recorded chunks
+          const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+          console.log("Audio Blob created:", audioBlob);
 
-        // Save the file locally
-        saveAs(audioBlob, "recording.wav");
+          // Upload the audio file and play the response audio
+          const audioURL = await uploadAndPlayAudio(audioBlob);
 
-        // Upload the file
-        await uploadAudio(audioBlob);
+          if (audioURL) {
+            console.log("Audio received and played successfully:", audioURL);
+          }
 
-        // Clear the audio chunks
-        audioChunksRef.current = [];
-        setIsProcessing(false); // Hide processing indicator
+          // Clear recorded chunks
+          audioChunksRef.current = [];
+        } catch (error) {
+          console.error("Error during audio processing:", error);
+        } finally {
+          setIsProcessing(false);
+        }
       };
 
-      // Start recording
       mediaRecorder.start();
-      mediaRecorderRef.current = mediaRecorder; // Store reference
-      setIsRecording(true); // Update recording state
+      mediaRecorderRef.current = mediaRecorder;
+      setIsRecording(true);
     } catch (error) {
       console.error("Error accessing microphone:", error);
     }
   };
 
-  // Stop recording audio
   const stopRecording = () => {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
-      setIsRecording(false); // Update recording state
+      setIsRecording(false);
     }
   };
 
-  // Upload the audio file to the backend
-  const uploadAudio = async (audioBlob: Blob) => {
+  const uploadAndPlayAudio = async (audioBlob: Blob): Promise<string | null> => {
+    console.log("Uploading audio file...");
+
     const formData = new FormData();
     formData.append("file", audioBlob, "file.wav");
 
@@ -71,22 +70,38 @@ const AudioRecorder: React.FC = () => {
         body: formData,
       });
 
+      console.log("Response status:", response.status);
+
       if (response.ok) {
-        console.log("File uploaded successfully.");
+        const audioData = await response.blob();
+        console.log("Audio data received from backend:", audioData);
+
+        // Create an object URL for the audio
+        const audioURL = URL.createObjectURL(audioData);
+
+        // Play the audio immediately
+        const audioElement = new Audio(audioURL);
+        audioElement.play().catch((error) => {
+          console.error("Error playing audio:", error);
+        });
+
+        return audioURL;
       } else {
-        console.error("Error uploading file:", await response.text());
+        const errorText = await response.text();
+        console.error("Error response from server:", errorText);
       }
     } catch (error) {
-      console.error("Error uploading file:", error);
+      console.error("Error uploading file or playing audio:", error);
     }
+
+    return null;
   };
 
   return (
     <div>
-      {/* Record/Stop button */}
       <Button
         variant="contained"
-        color={isRecording ? "error" : "info"} // Red when recording, blue otherwise
+        color={isRecording ? "error" : "info"}
         onClick={isRecording ? stopRecording : startRecording}
         style={{
           padding: "10px 20px",
@@ -98,7 +113,6 @@ const AudioRecorder: React.FC = () => {
         {isRecording ? "Stop Recording" : "Start Recording"}
       </Button>
 
-      {/* Loading Indicator */}
       {isProcessing && (
         <p style={{ marginTop: "10px", fontSize: "16px", color: "gray" }}>
           Processing audio...
