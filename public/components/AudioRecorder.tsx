@@ -19,8 +19,8 @@ const AudioRecorder: React.FC = () => {
       };
 
       recorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks.current, { type: "audio/mp4" });
-        saveAs(audioBlob, "recording.mp4");
+        const audioBlob = new Blob(audioChunks.current, { type: "audio/wav" });
+        saveAs(audioBlob, "recording.wav");
         audioChunks.current = []; // Clear recorded chunks
       };
 
@@ -38,15 +38,15 @@ const AudioRecorder: React.FC = () => {
       setMediaRecorder(null);
       setIsRecording(false);
 
-      const audioBlob = new Blob(audioChunks.current, { type: "audio/mp4" });
+      const audioBlob = new Blob(audioChunks.current, { type: "audio/wav" });
       audioChunks.current = []; // Clear recorded chunks
 
       // Upload the file to the server
       const formData = new FormData();
-      formData.append("audio", audioBlob, "recording.mp4");
+      formData.append("file", audioBlob, "recording.wav");
 
       try {
-        const response = await fetch("http://localhost:4000/upload-audio", {
+        const response = await fetch("http://localhost:8080/api/upload-audio", {
           method: "POST",
           body: formData,
         });
