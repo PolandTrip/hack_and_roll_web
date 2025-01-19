@@ -126,7 +126,7 @@ const AudioRecorder: React.FC = () => {
         autoPlay={false}
         loop={false}
         muted={true} // Ensure audio is separate from video
-        style={{ width: "300px", borderRadius: "15px", marginBottom: "20px" }}
+        style={{ width: "400px", borderRadius: "15px", marginBottom: "20px" }}
       />
 
       {/* Start/Stop Recording */}
