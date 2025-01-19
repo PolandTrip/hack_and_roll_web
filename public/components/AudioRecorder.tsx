@@ -3,11 +3,14 @@
 import React, { useRef, useState, useEffect } from "react";
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import CircularProgress from "@mui/material/CircularProgress";
+import TextDisplay from "./TextDisplay";
+import { SetMeal } from "@mui/icons-material";
 
 const AudioRecorder: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [msg, setMsg] = useState('')
   const [responseAudioURL, setResponseAudioURL] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -84,6 +87,7 @@ const AudioRecorder: React.FC = () => {
   
         const audioBase64 = jsonResponse.audio_base64; // Extract Base64 string
         const message = jsonResponse.message; // Extract message
+        setMsg(message)
         console.log("Message from backend:", message);
   
         // Decode Base64 to a Blob
@@ -200,6 +204,8 @@ const AudioRecorder: React.FC = () => {
           Processing audio...
         </p>
       )}
+
+      {msg != '' && <TextDisplay msg={msg}></TextDisplay>}
     </div>
   );
 };
