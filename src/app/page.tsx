@@ -3,14 +3,18 @@ import AudioRecorder from "../../public/components/AudioRecorder";
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <Typography
-        variant="body1"
-        sx={{ fontSize: "2.0rem", lineHeight: "1.8" }}
+    <div className="grid grid-rows-[auto_1fr_auto] items-center justify-items-center min-h-screen p-8 gap-8 sm:p-12 font-[family-name:var(--font-geist-sans)]">
+
+      {/* Audio Recorder */}
+      <div
+        style={{
+          maxWidth: "600px", // Restrict the width of the content
+          width: "100%",
+          margin: "0 auto", // Center-align content horizontally
+        }}
       >
-        Kaya toast-chan
-      </Typography>
-      <AudioRecorder />
+        <AudioRecorder />
+      </div>
     </div>
   );
 }

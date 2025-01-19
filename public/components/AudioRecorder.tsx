@@ -15,6 +15,9 @@ const AudioRecorder: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const [toasterState, setToasterState] = useState<"on" | "off" | "unknown">(
+    "unknown"
+  ); 
 
   const startRecording = async () => {
     try {
@@ -87,7 +90,9 @@ const AudioRecorder: React.FC = () => {
   
         const audioBase64 = jsonResponse.audio_base64; // Extract Base64 string
         const message = jsonResponse.message; // Extract message
-        setMsg(message)
+        const command = jsonResponse.command;
+        setMsg(message);
+        setToasterState(command);
         console.log("Message from backend:", message);
   
         // Decode Base64 to a Blob
@@ -138,18 +143,73 @@ const AudioRecorder: React.FC = () => {
   }, [responseAudioURL]);
 
   return (
-    <div style={{ textAlign: "center" }}>
+    <div
+      style={{
+        textAlign: "center",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh", // Full viewport height
+        padding: "20px", // Add padding for spacing
+      }}
+    >
+      {/* Kaya Toast-Chan Title and Toaster State Button */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center", // Align items vertically in the center
+          justifyContent: "center",
+          marginBottom: "20px", // Space below the title
+        }}
+      >
+        <h1
+          style={{
+            fontSize: "2rem",
+            color: "#333", // Neutral color
+            fontWeight: "bold",
+            margin: "0 16px 0 0", // Space between title and button
+          }}
+        >
+          Kaya Toast-Chan
+        </h1>
+        <button
+          style={{
+            padding: "10px 20px",
+            backgroundColor: toasterState === "on" ? "#28A745" : "#DC3545",
+            color: "#FFF",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          {toasterState === "on" ? "Toaster is ON" : "Toaster is OFF"}
+        </button>
+      </div>
+  
       {/* Video Avatar */}
-      <video
-        ref={videoRef}
-        src="/testing.mp4" // Place your MP4 file in the public directory
-        controls={false}
-        autoPlay={false}
-        loop={false}
-        muted={true} // Ensure audio is separate from video
-        style={{ width: "400px", borderRadius: "15px", marginBottom: "20px" }}
-      />
-
+      <div
+        style={{
+          marginBottom: "20px",
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <video
+          ref={videoRef}
+          src="/testing.mp4" // Place your MP4 file in the public directory
+          controls={false}
+          autoPlay={false}
+          loop={false}
+          muted // Ensure audio is separate from video
+          style={{
+            width: "600px", // Increase video width
+            height: "auto", // Maintain aspect ratio
+            borderRadius: "15px", // Keep rounded corners
+          }}
+        />
+      </div>
+  
       {/* Start/Stop Recording */}
       <div>
         {isRecording ? (
@@ -166,13 +226,11 @@ const AudioRecorder: React.FC = () => {
               cursor: "pointer",
             }}
           >
-            <FileUploadIcon style={{
-              marginRight: '5px'
-              }} />
+            <FileUploadIcon style={{ marginRight: "5px" }} />
             Start Recording
           </button>
         )}
-
+  
         {isRecording && (
           <button
             onClick={stopRecording}
@@ -189,25 +247,31 @@ const AudioRecorder: React.FC = () => {
             Stop Recording
           </button>
         )}
-
-      {isUploading && (
-        <div style={{ marginTop: "10px" }}>
-          <CircularProgress />
-          <p style={{ fontSize: "14px", color: "gray" }}>Uploading audio...</p>
-        </div>
-      )}
+  
+        {isUploading && (
+          <div style={{ marginTop: "10px" }}>
+            <CircularProgress />
+            <p style={{ fontSize: "14px", color: "gray" }}>Uploading audio...</p>
+          </div>
+        )}
       </div>
-
+  
       {/* Processing Message */}
       {isProcessing && (
         <p style={{ marginTop: "10px", fontSize: "16px", color: "gray" }}>
           Processing audio...
         </p>
       )}
-
-      {msg != '' && <TextDisplay msg={msg}></TextDisplay>}
+  
+      {msg !== "" && (
+        <div style={{ marginTop: "20px" }}>
+          <TextDisplay msg={msg} />
+        </div>
+      )}
     </div>
   );
+  
+  
 };
 
 export default AudioRecorder;

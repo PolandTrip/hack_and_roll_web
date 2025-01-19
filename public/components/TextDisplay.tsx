@@ -1,11 +1,13 @@
 interface TextDisplayProps {
     msg: string;
-}
-
-const TextDisplay = ( {msg } : TextDisplayProps ) => {
-    return <p>
-        {msg }
-    </p>
-}
-
-export default TextDisplay
+  }
+  
+  const TextDisplay: React.FC<TextDisplayProps> = ({ msg }) => {
+    return (
+      <p style={{ fontSize: "16px", color: "#333", marginTop: "10px" }}>
+        {msg}
+      </p>
+    );
+  };
+  
+  export default TextDisplay;
