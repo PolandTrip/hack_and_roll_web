@@ -8,7 +8,7 @@ export default function Home() {
         variant="body1"
         sx={{ fontSize: "2.0rem", lineHeight: "1.8" }}
       >
-        Welcome to the talking toaster!
+        Kaya toast-chan
       </Typography>
       <AudioRecorder />
     </div>
