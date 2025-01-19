@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useRef, useState } from "react";
-import Button from "@mui/material/Button";
+import React, { useRef, useState, useEffect } from "react";
 
 const AudioRecorder: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [responseAudioURL, setResponseAudioURL] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -23,21 +24,20 @@ const AudioRecorder: React.FC = () => {
         setIsProcessing(true);
 
         try {
-          // Create a Blob from the recorded chunks
           const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
           console.log("Audio Blob created:", audioBlob);
 
-          // Upload the audio file and play the response audio
-          const audioURL = await uploadAndPlayAudio(audioBlob);
+          const audioURL = await uploadAudio(audioBlob);
 
           if (audioURL) {
-            console.log("Audio received and played successfully:", audioURL);
+            console.log("Audio processed successfully:", audioURL);
+            setResponseAudioURL(audioURL);
           }
 
           // Clear recorded chunks
           audioChunksRef.current = [];
         } catch (error) {
-          console.error("Error during audio processing:", error);
+          console.error("Error processing audio:", error);
         } finally {
           setIsProcessing(false);
         }
@@ -58,7 +58,7 @@ const AudioRecorder: React.FC = () => {
     }
   };
 
-  const uploadAndPlayAudio = async (audioBlob: Blob): Promise<string | null> => {
+  const uploadAudio = async (audioBlob: Blob): Promise<string | null> => {
     console.log("Uploading audio file...");
 
     const formData = new FormData();
@@ -79,12 +79,6 @@ const AudioRecorder: React.FC = () => {
         // Create an object URL for the audio
         const audioURL = URL.createObjectURL(audioData);
 
-        // Play the audio immediately
-        const audioElement = new Audio(audioURL);
-        audioElement.play().catch((error) => {
-          console.error("Error playing audio:", error);
-        });
-
         return audioURL;
       } else {
         const errorText = await response.text();
@@ -97,22 +91,79 @@ const AudioRecorder: React.FC = () => {
     return null;
   };
 
-  return (
-    <div>
-      <Button
-        variant="contained"
-        color={isRecording ? "error" : "info"}
-        onClick={isRecording ? stopRecording : startRecording}
-        style={{
-          padding: "10px 20px",
-          fontSize: "16px",
-          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-          textTransform: "none",
-        }}
-      >
-        {isRecording ? "Stop Recording" : "Start Recording"}
-      </Button>
+  // Play video and audio automatically when the audio URL is set
+  useEffect(() => {
+    if (responseAudioURL && videoRef.current) {
+      const audioElement = new Audio(responseAudioURL);
 
+      audioElement.onplay = () => {
+        console.log("Audio started playing. Playing video...");
+        videoRef.current?.play();
+      };
+
+      audioElement.onended = () => {
+        console.log("Audio ended. Pausing video...");
+        videoRef.current?.pause();
+      };
+
+      audioElement.play().catch((error) => {
+        console.error("Error playing audio:", error);
+      });
+    }
+  }, [responseAudioURL]);
+
+  return (
+    <div style={{ textAlign: "center" }}>
+      {/* Video Avatar */}
+      <video
+        ref={videoRef}
+        src="/testing.mp4" // Place your MP4 file in the public directory
+        controls={false}
+        autoPlay={false}
+        loop={false}
+        muted={true} // Ensure audio is separate from video
+        style={{ width: "300px", borderRadius: "15px", marginBottom: "20px" }}
+      />
+
+      {/* Start/Stop Recording */}
+      <div>
+        {isRecording ? (
+          <p style={{ color: "red", fontWeight: "bold" }}>Recording...</p>
+        ) : (
+          <button
+            onClick={startRecording}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: "#007BFF",
+              color: "#FFF",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer",
+            }}
+          >
+            Start Recording
+          </button>
+        )}
+
+        {isRecording && (
+          <button
+            onClick={stopRecording}
+            style={{
+              padding: "10px 20px",
+              marginLeft: "10px",
+              backgroundColor: "#DC3545",
+              color: "#FFF",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer",
+            }}
+          >
+            Stop Recording
+          </button>
+        )}
+      </div>
+
+      {/* Processing Message */}
       {isProcessing && (
         <p style={{ marginTop: "10px", fontSize: "16px", color: "gray" }}>
           Processing audio...
