@@ -2,10 +2,12 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import FileUploadIcon from '@mui/icons-material/FileUpload';
+import CircularProgress from "@mui/material/CircularProgress";
 
 const AudioRecorder: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [responseAudioURL, setResponseAudioURL] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -61,6 +63,7 @@ const AudioRecorder: React.FC = () => {
 
   const uploadAudio = async (audioBlob: Blob): Promise<string | null> => {
     console.log("Uploading audio file...");
+    setIsUploading(true);
 
     const formData = new FormData();
     formData.append("file", audioBlob, "file.wav");
@@ -165,6 +168,13 @@ const AudioRecorder: React.FC = () => {
             Stop Recording
           </button>
         )}
+
+{isUploading && (
+        <div style={{ marginTop: "10px" }}>
+          <CircularProgress />
+          <p style={{ fontSize: "14px", color: "gray" }}>Uploading audio...</p>
+        </div>
+      )}
       </div>
 
       {/* Processing Message */}
