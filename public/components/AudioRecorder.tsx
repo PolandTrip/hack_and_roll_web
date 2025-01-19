@@ -75,25 +75,40 @@ const AudioRecorder: React.FC = () => {
         method: "POST",
         body: formData,
       });
-
+  
       console.log("Response status:", response.status);
-
+  
       if (response.ok) {
-        const audioData = await response.blob();
-        console.log("Audio data received from backend:", audioData);
-
-        // Create an object URL for the audio
-        setIsUploading(false);
-        const audioURL = URL.createObjectURL(audioData);
+        const jsonResponse = await response.json(); // Parse JSON response
+        console.log("Response data received from backend:", jsonResponse);
+  
+        const audioBase64 = jsonResponse.audio_base64; // Extract Base64 string
+        const message = jsonResponse.message; // Extract message
+        console.log("Message from backend:", message);
+  
+        // Decode Base64 to a Blob
+        const binaryString = atob(audioBase64); // Decode Base64 to binary string
+        const byteArray = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          byteArray[i] = binaryString.charCodeAt(i);
+        }
+        const audioBlob = new Blob([byteArray], { type: "audio/wav" });
+  
+        // Create an object URL for the Blob
+        const audioURL = URL.createObjectURL(audioBlob);
+  
+        // Save the audio URL to state for playback
         return audioURL;
       } else {
         const errorText = await response.text();
         console.error("Error response from server:", errorText);
       }
     } catch (error) {
-      console.error("Error uploading file or playing audio:", error);
+      console.error("Error uploading file or processing audio:", error);
+    } finally {
+      setIsUploading(false);
     }
-
+  
     return null;
   };
 
