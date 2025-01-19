@@ -200,7 +200,7 @@ const AudioRecorder: React.FC = () => {
           src="/testing.mp4" // Place your MP4 file in the public directory
           controls={false}
           autoPlay={false}
-          loop={false}
+          loop={true}
           muted // Ensure audio is separate from video
           style={{
             width: "600px", // Increase video width
