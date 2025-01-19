@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
+import FileUploadIcon from '@mui/icons-material/FileUpload';
 
 const AudioRecorder: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -141,6 +142,9 @@ const AudioRecorder: React.FC = () => {
               cursor: "pointer",
             }}
           >
+            <FileUploadIcon style={{
+              marginRight: '5px'
+              }} />
             Start Recording
           </button>
         )}
