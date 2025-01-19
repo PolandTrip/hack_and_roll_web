@@ -83,8 +83,8 @@ const AudioRecorder: React.FC = () => {
         console.log("Audio data received from backend:", audioData);
 
         // Create an object URL for the audio
+        setIsUploading(false);
         const audioURL = URL.createObjectURL(audioData);
-
         return audioURL;
       } else {
         const errorText = await response.text();
