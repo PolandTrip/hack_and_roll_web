@@ -51,6 +51,8 @@ const AudioRecorder: React.FC = () => {
       setIsRecording(true);
     } catch (error) {
       console.error("Error accessing microphone:", error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -169,7 +171,7 @@ const AudioRecorder: React.FC = () => {
           </button>
         )}
 
-{isUploading && (
+      {isUploading && (
         <div style={{ marginTop: "10px" }}>
           <CircularProgress />
           <p style={{ fontSize: "14px", color: "gray" }}>Uploading audio...</p>
